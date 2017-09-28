@@ -1,18 +1,14 @@
-#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <chrono>
 #include <thread>
-#include <sched.h>
 #include <cstdlib>
 #include <fcntl.h>
 #include <sys/param.h>
 #include <sys/pcpu.h>
 #include <kvm.h>
-
-
-#define AVERAGE_ACCURACY 1.0
 
 using namespace std::chrono;
 
@@ -32,10 +28,11 @@ struct interpolyaciya {
 
 class LoadGenerator {
 private:
-	interpolyaciya coef[4];
+	/*interpolyaciya coef[4];
 	double coefA;
 	double coefB;
-	double coefC;
+	double coefC;*/
+	std::vector<double> coeff;
 	std::thread thr;
 	bool closeThread = false;
 
@@ -75,40 +72,6 @@ private:
 		return curCpu;
 	}
 
-	int calcNumOfMeasures()
-	{
-		double previousAccuracy = 0.0;
-		double accuracy = 100.0;
-		int numOfMeasures = 5;
-
-		startLoad(80000);
-		
-
-		for (; abs(accuracy - previousAccuracy) >  AVERAGE_ACCURACY &&  numOfMeasures < 50; numOfMeasures += 5) {
-			previousAccuracy = accuracy;
-			accuracy = measure(numOfMeasures);
-			//std::cout << "abs " << abs(accuracy - previousAccuracy) << std::endl;
-		}
-		stopLoad();
-		return numOfMeasures - 5;
-	}
-
-	double measure(int numOfMeasures)
-	{
-		double sumOfMeasures = 0.0;
-		for (int i = 0; i < numOfMeasures; i++) {
-			memory d = getCurrentLoad();
-			std::this_thread::sleep_for(milliseconds(30));
-			memory l = getCurrentLoad();
-			std::this_thread::sleep_for(milliseconds(30));
-			std::cout << "zam " <<100.0*(l.busy - d.busy) / (l.work - d.work) << "   ";
-			sumOfMeasures += 100.0*(l.busy - d.busy) / (l.work - d.work);
-		}
-		std::cout << std::endl <<"avg " << sumOfMeasures / numOfMeasures << std::endl;
-
-		return sumOfMeasures / numOfMeasures;
-	}
-
 	void stopLoad() {
 		this->closeThread = true;
 		this->thr.join();
@@ -118,6 +81,58 @@ private:
 		this->closeThread = false;
 		this->thr = std::thread(&LoadGenerator::generateLoad, this, sleepTime);
 	}
+
+	class SysOfLinearEquation {
+	private:
+		std::vector<std::vector<double>> A;
+		std::vector<double> B;
+		std::vector<double> X;
+
+		void inverse() {
+			double determinant
+			for (i = 0; i < 3; i++)
+				determinant = determinant + (A[0][i] * (A[1][(i + 1) % 3] * A[2][(i + 2) % 3] - 
+					A[1][(i + 2) % 3] * A[2][(i + 1) % 3]));
+
+			std::vector<std::vector<double>> mat;
+			for (i = 0; i < 3; i++) {
+				mat[i].resize(3);
+				for (j = 0; j < 3; j++) {
+					mat[i].resize(3);
+					mat[i] = ((A[(j + 1) % 3][(i + 1) % 3] * A[(j + 2) % 3][(i + 2) % 3]) -
+						(A[(j + 1) % 3][(i + 2) % 3] * A[(j + 2) % 3][(i + 1) % 3]));
+				}
+			}
+
+			A = mat;
+		}
+	public:
+		SysOfLinearEquation(std::vector<double> x, std::vector<double> y) {
+			A.resize(x.size());
+			B.resize(x.size());
+			X.resize(x.size());
+
+			for (int i = 0; i < x.size(); i++) {
+				A[i].resize(x.size(), 1);
+				B[i] = y[i];
+				for (int j = 1; j < x.size(); j++) {
+					A[i][j] = pow(x[i], j);
+				}
+			}
+		}
+
+		std::vector<double> solve() {
+			inverse();
+			for (int i = 0; i < 3; i++) {
+				double sumInLine = 0;
+				for (int j = 0; j < 3; j++) {
+					sumInLine += A[i][j] * B[j];
+				}
+				X[i] = sumInLine
+			}
+			return X;
+		}
+	};
 
 public:
 
@@ -133,28 +148,29 @@ public:
 		CPU_ZERO(&my_set);
 		CPU_SET(0, &my_set);
 		sched_setaffinity(0, sizeof(cpu_set_t), &my_set);*/
-		int sleepTime[4] = { 10000, 45000, 80000, 300000 };
-		memory loads[5];
-		double cpuUsage[4];
-
-		//int numOfMeasures = calcNumOfMeasures();
+		std::vector<int> sleepTime { 10000, 80000, 300000 };
+		std::vector<double> cpuUsage(3);
 		
-		for(int i = 0; i < 4; i++){
+		for(auto it = sleepTime.begin(); it != myvector.end(); ++it){
 			memory d = getCurrentLoad();
-			startLoad(sleepTime[i]);
-			//cpuUsage[i] = measure(numOfMeasures);
-			std::this_thread::sleep_for(microseconds(sleepTime[i]*15));
+			startLoad(*it);
+			std::this_thread::sleep_for(microseconds((*it)*15));
 			memory l = getCurrentLoad();
 			stopLoad();	
+			cpuUsage.push_back(100.0*(l.busy - d.busy) / (l.work - d.work));
 			std::cout<< 100.0*(l.busy - d.busy) / (l.work - d.work) << " " << sleepTime[i] << std::endl;
 		}
+
+		SysOfLinearEquation sys(sleepTime, cpuUsage);
+		this->coef = sys.solve();
+		std::cout << "cpuUsage " << this->coeff[0] + this->coeff[1] * load + this->coeff[2] * pow(load, 2) << std::endl;
 	}
 
 
 	void setLoad(double load, int time) {
 		for (int i = 0; i < 4; i++) {
 			if (load >= this->coef[i].interval[0] && load <= this->coef[i].interval[1]) {
-				this->thr = std::thread(&LoadGenerator::generateLoad, this, (int)(this->coef[i].coefA*load + this->coef[i].coefB));
+				this->thr = std::thread(&LoadGenerator::generateLoad, this, this->coeff[0] + this->coeff[1]*load + this->coeff[2]*pow(load,2));
 				break;
 			}
 		}
