@@ -78,7 +78,7 @@ private:
 	int calcNumOfMeasures()
 	{
 		double previousAccuracy = 0.0;
-		double accuracy = -100.0;
+		double accuracy = 100.0;
 		int numOfMeasures = 5;
 
 		startLoad(80000);
@@ -86,21 +86,25 @@ private:
 
 		for (; abs(accuracy - previousAccuracy) >  AVERAGE_ACCURACY ||  numOfMeasures < 50; numOfMeasures += 5) {
 			previousAccuracy = accuracy;
-			double sumOfMeasures = 0.0;
-			for (int i = 0; i < numOfMeasures; i++) {
-				memory d = getCurrentLoad();
-				std::this_thread::sleep_for(milliseconds(150));
-				memory l = getCurrentLoad();
-				std::this_thread::sleep_for(milliseconds(150));
-				sumOfMeasures += 100.0*(l.busy - d.busy) / (l.work - d.work);
-			}
-			accuracy = sumOfMeasures / numOfMeasures;
+			accuracy = measure(numOfMeasures);
 		}
 		stopLoad();
 		return numOfMeasures;
 	}
 
-public:
+	void measure(int numOfMeasures)
+	{
+		double sumOfMeasures = 0.0;
+		for (int i = 0; i < numOfMeasures; i++) {
+			memory d = getCurrentLoad();
+			std::this_thread::sleep_for(milliseconds(150));
+			memory l = getCurrentLoad();
+			std::this_thread::sleep_for(milliseconds(150));
+			sumOfMeasures += 100.0*(l.busy - d.busy) / (l.work - d.work);
+		}
+		return sumOfMeasures / numOfMeasures;
+	}
+
 	void stopLoad() {
 		this->closeThread = true;
 		this->thr.join();
@@ -109,6 +113,8 @@ public:
 	void startLoad(int sleepTime) {
 		this->thr = std::thread(&LoadGenerator::generateLoad, this, sleepTime);
 	}
+
+public:
 
 	~LoadGenerator() {
 		if (this->thr.joinable()) {
@@ -126,32 +132,15 @@ public:
 		memory loads[5];
 		double cpuUsage[4];
 
-		calcNumOfMeasures();
-		/*
-		auto start = steady_clock::now();
-		int i = 0;
-		this->thr = std::thread(&LoadGenerator::generateLoad, this, 6000, 100000);
-		while (duration_cast<milliseconds>(steady_clock::now() - start).count() < 10000) {
-			auto start1 = steady_clock::now();
-			memory d = getCurrentLoad();
-			std::this_thread::sleep_for(milliseconds(150));
-			memory l = getCurrentLoad();
-			std::this_thread::sleep_for(milliseconds(150));
-			i += 15;
-			std::cout << 100.0*(l.busy - d.busy) / (l.work - d.work) << " " << std::endl;
-
-		}
-		stopLoad();
-	
-		loads[0] = getCurrentLoad();
+		int numOfMeasures = calcNumOfMeasures();
+		
 
 		for(int i = 0; i < 4; i++){
-			int t = (i > 1) ? 1000000 : 100000;
-			generateLoad(sleepTime[i], t);
-			loads[i + 1] = getCurrentLoad();
-			cpuUsage[i] = 100.0 * (loads[i+1].busy - loads[i].busy) / (loads[i+1].work - loads[i].work);
-			std::cout << cpuUsage[i] << std::endl;
-		}*/
+			startLoad(sleepTime[i]);
+			cpuUsage[i] = measure(numOfMeasures);
+			stopLoad();
+			std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
+		}
 	}
 
 
