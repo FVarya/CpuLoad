@@ -12,7 +12,7 @@
 #include <kvm.h>
 
 
-#define AVERAGE_ACCURACY 1.0
+#define AVERAGE_ACCURACY 2.0
 
 using namespace std::chrono;
 
@@ -84,15 +84,16 @@ private:
 		startLoad(80000);
 		
 
-		for (; abs(accuracy - previousAccuracy) >  AVERAGE_ACCURACY ||  numOfMeasures < 50; numOfMeasures += 5) {
+		for (; abs(accuracy - previousAccuracy) >  AVERAGE_ACCURACY &&  numOfMeasures < 50; numOfMeasures += 5) {
 			previousAccuracy = accuracy;
 			accuracy = measure(numOfMeasures);
+			std::cout << "abs " << abs(accuracy - previousAccuracy) << std::endl;
 		}
 		stopLoad();
-		return numOfMeasures;
+		return numOfMeasures - 5;
 	}
 
-	void measure(int numOfMeasures)
+	double measure(int numOfMeasures)
 	{
 		double sumOfMeasures = 0.0;
 		for (int i = 0; i < numOfMeasures; i++) {
@@ -102,6 +103,8 @@ private:
 			std::this_thread::sleep_for(milliseconds(150));
 			sumOfMeasures += 100.0*(l.busy - d.busy) / (l.work - d.work);
 		}
+		std::cout << "meas " << sumOfMeasures / numOfMeasures << std::endl;
+
 		return sumOfMeasures / numOfMeasures;
 	}
 
@@ -111,6 +114,7 @@ private:
 	}
 
 	void startLoad(int sleepTime) {
+		this->closeThread = false;
 		this->thr = std::thread(&LoadGenerator::generateLoad, this, sleepTime);
 	}
 
@@ -128,17 +132,16 @@ public:
 		CPU_ZERO(&my_set);
 		CPU_SET(0, &my_set);
 		sched_setaffinity(0, sizeof(cpu_set_t), &my_set);*/
-		int sleepTime[4] = { 6000, 45000, 80000, 12000 };
+		int sleepTime[4] = { 6000, 45000, 80000, 300000 };
 		memory loads[5];
 		double cpuUsage[4];
 
 		int numOfMeasures = calcNumOfMeasures();
 		
-
 		for(int i = 0; i < 4; i++){
 			startLoad(sleepTime[i]);
 			cpuUsage[i] = measure(numOfMeasures);
-			stopLoad();
+			stopLoad();	
 			std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
 		}
 	}
