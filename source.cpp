@@ -12,7 +12,7 @@
 #include <kvm.h>
 
 
-#define AVERAGE_ACCURACY 5
+#define AVERAGE_ACCURACY 1.0
 
 using namespace std::chrono;
 
@@ -69,19 +69,22 @@ private:
 			}
 			delete cpu;
 		}
+
+
 		kvm_close(kd);
 		return curCpu;
 	}
 
 	int calcNumOfMeasures()
 	{
-		double previousAccuracy;
+		double previousAccuracy = 0.0;
 		double accuracy = -100.0;
-		int numOfMeasures = 10;
+		int numOfMeasures = 5;
 
 		startLoad(80000);
+		
 
-		for (; abs(accuracy - previousAccuracy) < AVERAGE_ACCURACY, numOfMeasures < 100; numOfMeasures += 10) {
+		for (; abs(accuracy - previousAccuracy) >  AVERAGE_ACCURACY ||  numOfMeasures < 50; numOfMeasures += 5) {
 			previousAccuracy = accuracy;
 			double sumOfMeasures = 0.0;
 			for (int i = 0; i < numOfMeasures; i++) {
@@ -89,11 +92,9 @@ private:
 				std::this_thread::sleep_for(milliseconds(150));
 				memory l = getCurrentLoad();
 				std::this_thread::sleep_for(milliseconds(150));
-				std::cout << 100.0*(l.busy - d.busy) / (l.work - d.work) << " ";
 				sumOfMeasures += 100.0*(l.busy - d.busy) / (l.work - d.work);
 			}
 			accuracy = sumOfMeasures / numOfMeasures;
-			std::cout << "accuracy: " << accuracy << std::endl;
 		}
 		stopLoad();
 		return numOfMeasures;
@@ -141,7 +142,7 @@ public:
 
 		}
 		stopLoad();
-		/*
+	
 		loads[0] = getCurrentLoad();
 
 		for(int i = 0; i < 4; i++){
@@ -157,7 +158,7 @@ public:
 	void setLoad(double load, int time) {
 		for (int i = 0; i < 4; i++) {
 			if (load >= this->coef[i].interval[0] && load <= this->coef[i].interval[1]) {
-				this->thr = std::thread(&LoadGenerator::generateLoad, this, (int)(this->coef[i].coefA*load + this->coef[i].coefB), time);
+				this->thr = std::thread(&LoadGenerator::generateLoad, this, (int)(this->coef[i].coefA*load + this->coef[i].coefB));
 				break;
 			}
 		}
