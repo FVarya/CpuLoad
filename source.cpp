@@ -12,7 +12,7 @@
 #include <kvm.h>
 
 
-#define AVERAGE_ACCURACY 2.0
+#define AVERAGE_ACCURACY 1.0
 
 using namespace std::chrono;
 
@@ -87,7 +87,7 @@ private:
 		for (; abs(accuracy - previousAccuracy) >  AVERAGE_ACCURACY &&  numOfMeasures < 50; numOfMeasures += 5) {
 			previousAccuracy = accuracy;
 			accuracy = measure(numOfMeasures);
-			std::cout << "abs " << abs(accuracy - previousAccuracy) << std::endl;
+			//std::cout << "abs " << abs(accuracy - previousAccuracy) << std::endl;
 		}
 		stopLoad();
 		return numOfMeasures - 5;
@@ -98,12 +98,13 @@ private:
 		double sumOfMeasures = 0.0;
 		for (int i = 0; i < numOfMeasures; i++) {
 			memory d = getCurrentLoad();
-			std::this_thread::sleep_for(milliseconds(150));
+			std::this_thread::sleep_for(milliseconds(30));
 			memory l = getCurrentLoad();
-			std::this_thread::sleep_for(milliseconds(150));
+			std::this_thread::sleep_for(milliseconds(30));
+			std::cout << "zam " <<100.0*(l.busy - d.busy) / (l.work - d.work) << "   ";
 			sumOfMeasures += 100.0*(l.busy - d.busy) / (l.work - d.work);
 		}
-		std::cout << "meas " << sumOfMeasures / numOfMeasures << std::endl;
+		std::cout << std::endl <<"avg " << sumOfMeasures / numOfMeasures << std::endl;
 
 		return sumOfMeasures / numOfMeasures;
 	}
@@ -132,17 +133,20 @@ public:
 		CPU_ZERO(&my_set);
 		CPU_SET(0, &my_set);
 		sched_setaffinity(0, sizeof(cpu_set_t), &my_set);*/
-		int sleepTime[4] = { 6000, 45000, 80000, 300000 };
+		int sleepTime[4] = { 10000, 45000, 80000, 300000 };
 		memory loads[5];
 		double cpuUsage[4];
 
-		int numOfMeasures = calcNumOfMeasures();
+		//int numOfMeasures = calcNumOfMeasures();
 		
 		for(int i = 0; i < 4; i++){
+			memory d = getCurrentLoad();
 			startLoad(sleepTime[i]);
-			cpuUsage[i] = measure(numOfMeasures);
+			//cpuUsage[i] = measure(numOfMeasures);
+			std::this_thread::sleep_for(microseconds(sleepTime[i]*15));
+			memory l = getCurrentLoad();
 			stopLoad();	
-			std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
+			std::cout<< 100.0*(l.busy - d.busy) / (l.work - d.work) << " " << sleepTime[i] << std::endl;
 		}
 	}
 
