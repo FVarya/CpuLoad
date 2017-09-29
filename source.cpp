@@ -48,7 +48,7 @@ private:
 			if (this->closeThread) {
 				break;
 			}
-			std::this_thread::sleep_for(milliseconds(sleepTime));
+			std::this_thread::sleep_for(microseconds(sleepTime));
 		}
 		return running_total;
 	}
@@ -119,7 +119,6 @@ private:
 			for (int i = 0; i < x.size(); i++) {
 				A[i].resize(x.size(), 1);
 				B[i] = y[i];
-				std::cout << A[i][0] << " ";
 				for (int j = 1; j < x.size(); j++) {
 					A[i][j] = pow(x[i], j);
 					//std::cout << A[i][j] << " ";
@@ -158,12 +157,12 @@ public:
 		CPU_ZERO(&my_set);
 		CPU_SET(0, &my_set);
 		sched_setaffinity(0, sizeof(cpu_set_t), &my_set);*/
-		std::vector<int> sleepTime { 2, 20, 300};
+		std::vector<int> sleepTime { 1, 120, 300};
 		std::vector<double> cpuUsage(3);
 		
 		for(int i = 0; i < sleepTime.size(); i++){
 			memory d = getCurrentLoad();
-			startLoad(sleepTime[i]);
+			startLoad(sleepTime[i]*1000);
 			std::this_thread::sleep_for(milliseconds(1500));
 			memory l = getCurrentLoad();
 			stopLoad();	
@@ -178,14 +177,14 @@ public:
 	}
 
 
-	void setLoad(double load, int time) {
+	void setLoad(double load) {
 		startLoad(this->coeff[0] + this->coeff[1] * load + this->coeff[2] * pow(load, 2));
 	}
 };
 
 int main() {
 	LoadGenerator ld;
-	//ld.setLoad(30.0, 10000000);
+	//ld.setLoad(30.0);
 	//ld.stopLoad();
 	std::cout << "stop" << std::endl;
 }
