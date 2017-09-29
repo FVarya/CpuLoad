@@ -157,18 +157,18 @@ public:
 		CPU_ZERO(&my_set);
 		CPU_SET(0, &my_set);
 		sched_setaffinity(0, sizeof(cpu_set_t), &my_set);*/
-		std::vector<int> sleepTime { 1, 120, 300};
-		std::vector<double> cpuUsage(3);
+		std::vector<int> sleepTime (20);//{ 1, 120, 300};
+		std::vector<double> cpuUsage(sleepTime.size());
 		
-		for(int i = 0; i < sleepTime.size(); i++){
+		for(int i = 0, j = 1; i < sleepTime.size(); i++, j+=20){
+			sleepTime[i] = j;
 			memory d = getCurrentLoad();
 			startLoad(sleepTime[i]*1000);
 			std::this_thread::sleep_for(milliseconds(1500));
 			memory l = getCurrentLoad();
 			stopLoad();	
 			cpuUsage[i] = 100.0*(l.busy - d.busy) / (l.work - d.work);
-			std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
-
+			std::cout << "(" << cpuUsage[i] << ";" << sleepTime[i] << "), ";
 		}
 
 		SysOfLinearEquation sys(cpuUsage, sleepTime);
