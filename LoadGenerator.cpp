@@ -5,6 +5,7 @@ LoadGenerator::LoadGenerator() {
 	std::vector<double> cpuUsage(sleepTime.size());
 
 	for (int i = 0, j = 1; i < sleepTime.size(); i++, j += STEP_OF_SLEEP_TIME) {
+		sleepTime[i] = j;
 		cpuDump d = getCurrentLoad();
 		startLoad(sleepTime[i] * 1000);
 		std::this_thread::sleep_for(milliseconds(TIME_OF_LOAD));
