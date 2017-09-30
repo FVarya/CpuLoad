@@ -4,14 +4,9 @@ LoadGenerator::LoadGenerator() {
 	std::vector<int> sleepTime(NUM_OF_POINTS_FOR_POLYNOME);// {1, 120, 300};
 	std::vector<double> cpuUsage(sleepTime.size());
 
-	for (int i = 0, j = 1; i < sleepTime.size(); i++, j += STEP_OF_SLEEP_TIME) {
+	for (int i = 0, j = timeOfMaxLoad(); i < sleepTime.size(); i++, j += STEP_OF_SLEEP_TIME) {
 		sleepTime[i] = j;
-		cpuDump d = getCurrentLoad();
-		startLoad(sleepTime[i] * 1000);
-		std::this_thread::sleep_for(milliseconds(TIME_OF_LOAD));
-		cpuDump l = getCurrentLoad();
-		stopLoad();
-		cpuUsage[i] = 100.0*(l.busy - d.busy) / (l.work - d.work);
+		cpuUsage[i] = getCurrentLoad(sleepTime[i]);
 		std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
 
 	}
@@ -40,7 +35,27 @@ int LoadGenerator::generateLoad(int sleepTime) {
 	return running_total;
 }
 
-cpuDump LoadGenerator::getCurrentLoad() {          //300 mcrs ~ 216 - 289
+double LoadGenerator::getCurrentLoad(int sleepTime) {
+	cpuDump d = getCpuDump();
+	startLoad(sleepTime);
+	std::this_thread::sleep_for(milliseconds(sleepTime*4));
+	cpuDump l = getCpuDump();
+	stopLoad();
+	return 100.0*(l.busy - d.busy) / (l.work - d.work);
+}
+
+
+int LoadGenerator::timeOfMaxLoad() {
+	double currentLoad = 0.0;
+	int sleepTime = START_SLEEP_TIME;
+	for (; currentLoad < 90.0; sleepTime /= 10) {
+		currentLoad = getCurrentLoad(sleepTime);
+	}
+	
+	return sleepTime * 10;
+}
+
+cpuDump LoadGenerator::getCpuDump() {          //300 mcrs ~ 216 - 289
 	cpuDump curCpu;
 
 	kvm_t *kd;
