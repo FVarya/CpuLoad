@@ -4,15 +4,16 @@ LoadGenerator::LoadGenerator() {
 	std::vector<int> sleepTime(NUM_OF_POINTS_FOR_POLYNOME);// {1, 120, 300};
 	std::vector<double> cpuUsage(sleepTime.size());
 
-	for (int i = 0, j = timeOfMaxLoad(); i < sleepTime.size(); i++, j += STEP_OF_SLEEP_TIME) {
+	int minTime = timeOfMaxLoad();
+	for (int i = 0, j = minTime; i < sleepTime.size(); i++, j += minTime * 80) {
 		sleepTime[i] = j;
 		cpuUsage[i] = getCurrentLoad(sleepTime[i]);
 		std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
 
 	}
 
-	SysOfLinearEquation sys(cpuUsage, sleepTime);
-	this->coeff = sys.solve();
+	//SysOfLinearEquation sys(cpuUsage, sleepTime);
+	//this->coeff = sys.solve();
 }
 
 LoadGenerator::~LoadGenerator() {
@@ -38,7 +39,8 @@ int LoadGenerator::generateLoad(int sleepTime) {
 double LoadGenerator::getCurrentLoad(int sleepTime) {
 	cpuDump d = getCpuDump();
 	startLoad(sleepTime);
-	std::this_thread::sleep_for(milliseconds(sleepTime*4));
+	//int loadTime = sleepTime * 2 < 500000 ? 500000 : sleepTime * 2;
+	std::this_thread::sleep_for(microseconds(1300000));
 	cpuDump l = getCpuDump();
 	stopLoad();
 	return 100.0*(l.busy - d.busy) / (l.work - d.work);
@@ -50,6 +52,8 @@ int LoadGenerator::timeOfMaxLoad() {
 	int sleepTime = START_SLEEP_TIME;
 	for (; currentLoad < 90.0; sleepTime /= 10) {
 		currentLoad = getCurrentLoad(sleepTime);
+		std::cout << "curret load: " << currentLoad;
+		std::cout << "; curret time " << sleepTime << std::endl;		
 	}
 	
 	return sleepTime * 10;
