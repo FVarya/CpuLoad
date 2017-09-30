@@ -50,13 +50,13 @@ double LoadGenerator::getCurrentLoad(int sleepTime) {
 int LoadGenerator::timeOfMaxLoad() {
 	double currentLoad = 0.0;
 	int sleepTime = START_SLEEP_TIME;
-	for (; currentLoad < 90.0; sleepTime /= 10) {
+	for (; currentLoad < 90.0 &&  sleepTime > 1; sleepTime /= 10) {
 		currentLoad = getCurrentLoad(sleepTime);
 		std::cout << "curret load: " << currentLoad;
 		std::cout << "; curret time " << sleepTime << std::endl;		
 	}
 	
-	return sleepTime * 10;
+	return sleepTime == 1 ? sleepTime : sleepTime * 10;
 }
 
 cpuDump LoadGenerator::getCpuDump() {          //300 mcrs ~ 216 - 289
