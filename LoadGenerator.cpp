@@ -26,7 +26,7 @@ int LoadGenerator::generateLoad(int sleepTime) {
 	int running_total = 2384;
 	for (; ; ) {
 		for (int i = 0; i < NUM_OF_CYCLES_IN_LOAD; i++) {
-			running_total = 37 * running_total + i;
+			running_total = (rand() % 30 + 1985) * running_total + i;
 		}
 		if (this->closeThread) {
 			break;
@@ -39,8 +39,8 @@ int LoadGenerator::generateLoad(int sleepTime) {
 double LoadGenerator::getCurrentLoad(int sleepTime) {
 	cpuDump d = getCpuDump();
 	startLoad(sleepTime);
-	//int loadTime = sleepTime * 2 < 500000 ? 500000 : sleepTime * 2;
-	std::this_thread::sleep_for(microseconds(1300000));
+	int loadTime = sleepTime * 2 < 1500000 ? 1500000 : sleepTime * 2;
+	std::this_thread::sleep_for(microseconds(loadTime));
 	cpuDump l = getCpuDump();
 	stopLoad();
 	return 100.0*(l.busy - d.busy) / (l.work - d.work);
