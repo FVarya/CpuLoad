@@ -1,11 +1,22 @@
 #include "LoadGenerator.h"
 
 LoadGenerator::LoadGenerator() {
+	const int NUMBER_OF_CORE = 0x1;
+	cpulevel_t level = CPU_LEVEL_ROOT;
+	cpuwhich_t which = CPU_WHICH_PID;
+	id_t id = -1;
+	cpuset_t myset = CPUSET_T_INITIALIZER(NUMBER_OF_CORE);
+	
+	if(cpuset_setaffinity(CPU_LEVEL_WHICH, which, id, sizeof(myset), &myset) == -1){
+		std::cout << "Core error" << std::endl;
+	}
+
+
 	std::vector<int> sleepTime(NUM_OF_POINTS_FOR_POLYNOME);// {1, 120, 300};
 	std::vector<double> cpuUsage(sleepTime.size());
 
 	int minTime = timeOfMaxLoad();
-	for (int i = 0, j = minTime; i < sleepTime.size(); i++, j += minTime * 80) {
+	for (int i = 0, j = minTime; i < sleepTime.size(); i++, j += minTime * i * 4) {
 		sleepTime[i] = j;
 		cpuUsage[i] = getCurrentLoad(sleepTime[i]);
 		std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
@@ -26,12 +37,12 @@ int LoadGenerator::generateLoad(int sleepTime) {
 	int running_total = 2384;
 	for (; ; ) {
 		for (int i = 0; i < NUM_OF_CYCLES_IN_LOAD; i++) {
-			running_total = (rand() % 30 + 1985) * running_total + i;
+			running_total = 37 * running_total + i;
 		}
 		if (this->closeThread) {
 			break;
 		}
-		std::this_thread::sleep_for(microseconds(sleepTime));
+		std::this_thread::sleep_for(nanoseconds(sleepTime));
 	}
 	return running_total;
 }
@@ -39,8 +50,8 @@ int LoadGenerator::generateLoad(int sleepTime) {
 double LoadGenerator::getCurrentLoad(int sleepTime) {
 	cpuDump d = getCpuDump();
 	startLoad(sleepTime);
-	int loadTime = sleepTime * 2 < 1500000 ? 1500000 : sleepTime * 2;
-	std::this_thread::sleep_for(microseconds(loadTime));
+	int loadTime = sleepTime * 2 < 1300000000 ? 1300000000 : sleepTime * 2;
+	std::this_thread::sleep_for(nanoseconds(loadTime));
 	cpuDump l = getCpuDump();
 	stopLoad();
 	return 100.0*(l.busy - d.busy) / (l.work - d.work);

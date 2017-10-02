@@ -10,13 +10,14 @@
 #include <sys/param.h>
 #include <sys/pcpu.h>
 #include <kvm.h>
+#include <sys/cpuset.h>
 
 using namespace std::chrono;
 
 #define NUM_OF_CYCLES_IN_LOAD 10000000
-#define NUM_OF_POINTS_FOR_POLYNOME 10
+#define NUM_OF_POINTS_FOR_POLYNOME 15
 //#define STEP_OF_SLEEP_TIME 30000
-#define START_SLEEP_TIME 10000;
+#define START_SLEEP_TIME 10000000;
 //#define TIME_OF_LOAD 1500
 
 struct cpuDump {
