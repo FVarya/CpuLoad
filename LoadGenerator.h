@@ -11,6 +11,7 @@
 #include <sys/pcpu.h>
 #include <kvm.h>
 #include <sys/cpuset.h>
+//#include "LSM.h"
 
 using namespace std::chrono;
 
@@ -28,7 +29,7 @@ struct cpuDump {
 
 class LoadGenerator {
 private:
-	std::vector<double> coeff;
+	std::vector<long double> coeff;
 	std::thread thr;
 	bool closeThread = false;
 

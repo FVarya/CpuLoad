@@ -1,4 +1,4 @@
-#include "LoadGenerator.h"
+//#include "LoadGenerator.h"
 #include "LSM.h"
 
 LoadGenerator::LoadGenerator() {
@@ -13,20 +13,20 @@ LoadGenerator::LoadGenerator() {
 	}
 
 
-	std::vector<double> sleepTime(NUM_OF_POINTS_FOR_POLYNOME);// {1, 120, 300};
+	std::vector<long> sleepTime(NUM_OF_POINTS_FOR_POLYNOME);// {1, 120, 300};
 	std::vector<double> cpuUsage(sleepTime.size());
 
 	int minTime = timeOfMaxLoad();
 	for (int i = 0, j = minTime; i < sleepTime.size(); i++, j += minTime * i * 4) {
 		sleepTime[i] = j;
 		cpuUsage[i] = getCurrentLoad(sleepTime[i]);
-		std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
+		std::cout << "("  << cpuUsage[i] << "; " << sleepTime[i] << ")," << std::endl;
 
 
 	}
 
 	LinearSystemOfLSM approx(cpuUsage, sleepTime, DEGREE + 1);
-	coeff = approx.solve;
+	coeff = approx.GaussSeidelSolution(NORM);
 	for (int i = 0; i < coeff.size(); i++) {
 		std::cout << "coeff " << i << " " << coeff[i] << std::endl;
 	}
@@ -113,5 +113,5 @@ void LoadGenerator::setLoad(double load) {
 	if (sleepTime < 0) {
 		throw std::string("Invalid sleep time");
 	}
-	startLoad(sleepTime * 1000);
+	//startLoad(sleepTime);
 }

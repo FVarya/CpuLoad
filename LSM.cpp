@@ -1,6 +1,6 @@
 #include "LSM.h"
 
-LinearSystemOfLSM::LinearSystemOfLSM(std::vector<double> x, std::vector<double> y, int dimension) {
+LinearSystemOfLSM::LinearSystemOfLSM(std::vector<double> x, std::vector<long> y, int dimension) {
 	Dimension = dimension;
 	A.resize(Dimension);
 	B.resize(Dimension, 0);
@@ -25,17 +25,17 @@ LinearSystemOfLSM::LinearSystemOfLSM(std::vector<double> x, std::vector<double> 
 		for (int j = 0; j < Dimension - 1; j++)
 			A[i][j] = A[i - 1][j + 1];
 
-	GaussSeidelSolution(NORM);
+	//GaussSeidelSolution(NORM);
 }
 
-double LinearSystemOfLSM::solve(double x) {
+/*double LinearSystemOfLSM::solve(double x) {
 	double result = 0;
 	for (int j = 0; j < Dimension; j++) {
 		result += X[j] * pow(x, j);
 	}
 
 	return result;
-}
+}*/
 
 std::vector<long double> LinearSystemOfLSM::GaussSeidelSolution(double norm) {
 	std::vector<long double> previousSol(Dimension);

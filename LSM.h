@@ -1,4 +1,4 @@
-//#include "LoadGenerator.h"
+#include "LoadGenerator.h"
 
 class LinearSystemOfLSM {
 private:
@@ -7,10 +7,10 @@ private:
 	std::vector<long double> B;
 	int Dimension;
 
-	std::vector<long double> GaussSeidelSolution(double norm);
 public:
-	LinearSystemOfLSM(std::vector<double> x, std::vector<double> y, int dimension);
+	LinearSystemOfLSM(std::vector<double> x, std::vector<long> y, int dimension);
 
-	double solve(double x);
+	std::vector<long double> GaussSeidelSolution(double norm);
+		//double solve(double x);
 
 };
