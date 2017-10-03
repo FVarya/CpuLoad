@@ -16,9 +16,9 @@ using namespace std::chrono;
 
 #define NUM_OF_CYCLES_IN_LOAD 10000000
 #define NUM_OF_POINTS_FOR_POLYNOME 15
-//#define STEP_OF_SLEEP_TIME 30000
-#define START_SLEEP_TIME 10000000;
-//#define TIME_OF_LOAD 1500
+#define START_SLEEP_TIME 10000000.0;
+#define NORM 0.001
+#define DEGREE 3
 
 struct cpuDump {
 	unsigned long long busy = 0;

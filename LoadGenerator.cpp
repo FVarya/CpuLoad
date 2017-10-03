@@ -1,4 +1,5 @@
 #include "LoadGenerator.h"
+#include "LSM.h"
 
 LoadGenerator::LoadGenerator() {
 	const int NUMBER_OF_CORE = 0x1;
@@ -12,7 +13,7 @@ LoadGenerator::LoadGenerator() {
 	}
 
 
-	std::vector<int> sleepTime(NUM_OF_POINTS_FOR_POLYNOME);// {1, 120, 300};
+	std::vector<double> sleepTime(NUM_OF_POINTS_FOR_POLYNOME);// {1, 120, 300};
 	std::vector<double> cpuUsage(sleepTime.size());
 
 	int minTime = timeOfMaxLoad();
@@ -21,10 +22,14 @@ LoadGenerator::LoadGenerator() {
 		cpuUsage[i] = getCurrentLoad(sleepTime[i]);
 		std::cout << cpuUsage[i] << " " << sleepTime[i] << std::endl;
 
+
 	}
 
-	//SysOfLinearEquation sys(cpuUsage, sleepTime);
-	//this->coeff = sys.solve();
+	LinearSystemOfLSM approx(cpuUsage, sleepTime, DEGREE + 1);
+	coeff = approx.solve;
+	for (int i = 0; i < coeff.size(); i++) {
+		std::cout << "coeff " << i << " " << coeff[i] << std::endl;
+	}
 }
 
 LoadGenerator::~LoadGenerator() {
@@ -103,7 +108,7 @@ void LoadGenerator::startLoad(int sleepTime) {
 }
 
 void LoadGenerator::setLoad(double load) {
-	int sleepTime = this->coeff[0] + this->coeff[1] * load + this->coeff[2] * pow(load, 2);
+	int sleepTime = this->coeff[0] + this->coeff[1] * load + this->coeff[2] * pow(load, 2) + this->coeff[3] * pow(load, 3);
 	std::cout << "sleepTime: " << sleepTime << std::endl;
 	if (sleepTime < 0) {
 		throw std::string("Invalid sleep time");
